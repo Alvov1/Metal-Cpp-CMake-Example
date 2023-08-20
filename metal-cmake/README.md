@@ -1,1 +1,1 @@
-Here should be located sources of the Metal CPP interface, which were adapted for use with CMake. They can be obtained from the link: https://github.com/LeeTeng2001/metal-cpp-cmake.git
+Here should be located sources of the Metal CPP interface (metal-cmake folder), which were adapted for use with CMake. They can be obtained from the link: https://github.com/LeeTeng2001/metal-cpp-cmake.git
