@@ -1,49 +1,13 @@
 #include <iostream>
-#include <sstream>
-
+#include <iomanip>
 #include <Foundation/Foundation.hpp>
 #include <Metal/Metal.hpp>
-#include <iomanip>
+
+#include "MetalException.h"
 
 #define NS_PRIVATE_IMPLEMENTATION
 #define CA_PRIVATE_IMPLEMENTATION
 #define MTL_PRIVATE_IMPLEMENTATION
-
-class MetalException final: public std::exception {
-    std::string message {};
-public:
-    explicit MetalException(const NS::Error* ofError) {
-        std::stringstream ss {};
-        ss << ofError->code() << ". ";
-
-        const auto* description = ofError->description();
-        if(description != nullptr)
-            ss << description->cString(NS::ASCIIStringEncoding) << ". ";
-
-        const auto* recoverySuggestion = ofError->localizedRecoverySuggestion();
-        if(recoverySuggestion != nullptr)
-            ss << recoverySuggestion->cString(NS::ASCIIStringEncoding) << ". ";
-
-        const auto* failureReason = ofError->localizedFailureReason();
-        if(failureReason != nullptr)
-            ss << failureReason->cString(NS::ASCIIStringEncoding) << ". ";
-
-        message = ss.str();
-    }
-    [[nodiscard]] const char* what() const noexcept override {
-        return message.c_str();
-    }
-};
-
-template <typename bufferType = float>
-MTL::Buffer* makeRandomBuffer(MTL::Device* onDevice, unsigned withSize) {
-    MTL::Buffer* ourBuffer = onDevice->newBuffer(withSize * sizeof(bufferType), MTL::ResourceStorageModeShared);
-    if(ourBuffer == nullptr)
-        throw std::runtime_error("0. Failed to allocate buffer on device.");
-    for(unsigned i = 0; i < withSize; ++i)
-        reinterpret_cast<bufferType*>(ourBuffer->contents())[i] = rand();
-    return ourBuffer;
-}
 
 int main() {
     try {
@@ -60,7 +24,8 @@ int main() {
         )";
 
         /* 1. Load library with kernel function. */
-        MTL::Library* library = device->newLibrary( NS::String::string(kernelSrc, NS::UTF8StringEncoding), nullptr, &pError);
+//        MTL::Library* library = device->newLibrary( NS::String::string(kernelSrc, NS::UTF8StringEncoding), nullptr, &pError);
+        MTL::Library* library = device->newLibrary(NS::URL::fileURLWithPath(NS::String::string("../kernel.metal", NS::ASCIIStringEncoding)), &pError);
         if(library == nullptr || pError != nullptr)
             throw MetalException(pError);
 
@@ -71,11 +36,11 @@ int main() {
             throw MetalException(pError);
 
         /* 3. Prepare data. */
-        const unsigned arrayLength = 16;
+        const unsigned arrayLength = 8;
         using BufferType = unsigned;
         const std::tuple buffers = {
-                makeRandomBuffer<BufferType>(device, arrayLength),
-                makeRandomBuffer<BufferType>(device, arrayLength),
+                device->newBuffer(std::vector<BufferType>{ 0, 1, 2, 3, 4, 5, 6, 7 }.data(), arrayLength * sizeof(BufferType), MTL::ResourceStorageModeShared),
+                device->newBuffer(std::vector<BufferType>{ 0, 1, 2, 3, 4, 5, 6, 7 }.data(), arrayLength * sizeof(BufferType), MTL::ResourceStorageModeShared),
                 device->newBuffer(arrayLength * sizeof(BufferType), MTL::ResourceStorageModeShared)
         }; const auto& [bufferA, bufferB, resultBuffer] = buffers;
 
