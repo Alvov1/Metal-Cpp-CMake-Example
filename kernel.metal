@@ -1,3 +1,7 @@
+/*
+ * Source code of Metal library written in Metal Shading Language
+ */
+
 #include <metal_stdlib>
 using namespace metal;
 
